@@ -1,0 +1,214 @@
+body {
+  font-size: 1.2rem;
+  line-height: 2rem;
+  font-family: Arial, helvetica, sans-serif;
+}
+body.dark-theme {
+  color: #ddd;
+}
+
+.row {
+  display: block;
+  float: left;
+}
+.col {
+  display: inline-block;
+  vertical-align: top;
+  float: left;
+  min-height: 100px;
+  min-width: 240px;
+  position: relative;
+}
+.col .loading-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.col + .col {
+  border-left: 1px solid #3caefb;
+}
+.clear {
+  display: table;
+  clear: both;
+}
+.icon-profile {
+  background-image: url(/images/playstation-logo.jpg);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain;
+  height: 70px;
+  width: 70px;
+  margin: 0 10px 0 0;
+}
+
+.column-unshrink {
+  flex-shrink: 0;
+}
+.fitting-width {
+  width: 100%;
+}
+.row-flex  {
+  flex: 1 1 auto;
+}
+.max-two-lines {
+  word-break: break-all;
+  max-height: 3rem;
+  overflow: hidden;
+  line-height: 1.5rem;
+  font-size: 16px;
+}
+.text {
+  line-height: 1.5rem;
+  font-size: 16px;
+}
+.columns {
+  flex: 1 1 0px;
+  padding-left: 0;
+  padding-right: 0;
+  display: flex;
+}
+.separator-pageitems {
+  display: none;
+}
+
+.profile-text-title, .bold {
+  font-weight: bold;
+}
+.border {
+  border: 1px solid #3caefb;
+}
+#user-information {
+  padding: 15px;
+}
+#total-info {
+  line-height: 1.5rem;
+  padding: 15px 15px 10px 15px;
+  min-width: 220px;
+}
+#navigate-banner {
+  max-width: 280px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  line-height: 1.5rem;
+  padding: 15px 15px 10px 15px;
+}
+
+#navigate-banner svg {
+  width: 46px;
+}
+
+#navigate-banner .text {
+  padding-left: 15px;
+}
+
+.btn {
+  -webkit-appearance: button;
+  outline: 0;
+  display: inline-block;
+  font-weight: 400;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: .25rem .5rem;
+  font-size: .875rem;
+  line-height: 1.5;
+  border-radius: .2rem;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+}
+.btn.bold {
+  font-weight: bold;
+}
+.btn span {
+  padding-left: 7px;
+}
+.btn svg {
+  float: left;
+}
+.btn-primary {
+  color: #fff;
+  background: #5887F5;
+  cursor: pointer;
+  text-align: center;
+  float: left;
+}
+.btn-primary:hover {
+  color: #fff;
+  background-color: #0069d9;
+  border-color: #0062cc;
+}
+.btn-primary svg {
+  stroke: #fff;
+}
+.btn-primary:not(:disabled):not(.disabled):active:focus {
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.5);
+}
+.btn-primary.disabled, .btn-primary:disabled {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+@keyframes loading-animation {
+  0% {
+    opacity: 0;
+    transform: rotateZ(-90deg) scale(.5);
+  }
+  30%, 70% {
+    opacity: 1;
+    transform: rotateZ(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: rotateZ(90deg) scale(.5);
+  }
+}
+.loading-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transition: opacity .5s ease-in-out;
+}
+
+.loading-screen .loading-indicator--shape-size-regular {
+  height: 24px;
+  width: 24px;
+}
+.loading-screen .loading-indicator--circle-fill,
+.loading-screen .loading-indicator--cross-fill,
+.loading-screen .loading-indicator--square-fill,
+.loading-screen .loading-indicator--triangle-fill {
+  fill: #3caefb;
+}
+
+.loading-screen .loading-indicator__triangle {
+  -webkit-animation: loading-animation 1s 0s infinite;
+  animation: loading-animation 1s 0s infinite;
+}
+.loading-screen .loading-indicator__circle {
+  -webkit-animation: loading-animation 1s .1s infinite;
+  animation: loading-animation 1s .1s infinite;
+}
+.loading-screen .loading-indicator__cross {
+  -webkit-animation: loading-animation 1s .2s infinite;
+  animation: loading-animation 1s .2s infinite;
+}
+.loading-screen .loading-indicator__square {
+  -webkit-animation: loading-animation 1s .3s infinite;
+  animation: loading-animation 1s .3s infinite;
+}
+
+.hidden {
+  display: none!important;
+}

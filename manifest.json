@@ -1,0 +1,22 @@
+{
+  "name": "PSN Export Transactions History",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "description": "This extension allows to export your transactions history from Sony PlayStation Network into CSV file",
+  "devtools_page": "devtools.html",
+  "icons": {
+    "256": "images/psn-icon-256.png",
+    "128": "images/psn-icon-128.png",
+    "16": "images/psn-icon-16.png",
+    "32": "images/psn-icon-32.png",
+    "48": "images/psn-icon-48.png"
+  },
+  "permissions": [
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://id.sonyentertainmentnetwork.com/*",
+    "*://*.api.playstation.com/*",
+    "*://web.np.playstation.com/*"
+  ]
+}
