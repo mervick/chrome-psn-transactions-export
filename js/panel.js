@@ -59,6 +59,7 @@ function infoShowData(count, total, CSV) {
   function loadUserInfo() {
     if (globals.userPsnID && globals.userPsnID.length) {
       clearInterval(timer);
+      return;
     }
     chrome.devtools.inspectedWindow.eval("document.getElementsByClassName('profile-text-main')[0].innerText",
       userId => {
@@ -358,6 +359,7 @@ chrome.devtools.network.onRequestFinished.addListener(function (netevent) {
     for (const header of netevent.request.headers) {
       if (header.name == "authorization") {
         globals.authToken = header.value;
+        break;
       }
     }
     if (globals.authToken) {
