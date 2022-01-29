@@ -16,3 +16,8 @@ click on "Account Settings" link in the user menu, open Developer Tools in your 
 click on the "PSN Transactions" tab, go to "Transaction History" of your account settings,
 after downloading the data (may take several minutes), a button for downloading CSV file will appear on the Developer Tools panel.
 Click on the button to download the history of your transaction history.
+
+
+![PSN Export Transaction History Dev Tool](https://github.com/mervick/chrome-psn-transactions-export/blob/master/images/screenshots/01.png)
+![PSN Export Transaction History Dev Tool](https://github.com/mervick/chrome-psn-transactions-export/blob/master/images/screenshots/02.png)
+![PSN Export Transaction History Dev Tool](https://github.com/mervick/chrome-psn-transactions-export/blob/master/images/screenshots/03.png)
