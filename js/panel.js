@@ -64,7 +64,7 @@ function infoShowData(count, total, CSV) {
     chrome.devtools.inspectedWindow.eval("document.getElementsByClassName('profile-text-main')[0].innerText",
       userId => {
         if (userId != globals.latestPsnID) {
-          infoShowBanner()
+          infoShowLoader()
         }
         globals.latestPsnID = userId;
         globals.userPsnID = userId;
@@ -225,12 +225,12 @@ function convertToCSV(data, columns) {
     CSV += nl;
     let i;
     for (i = 0; i < total_index - 2; i++) {
-      CSV += "\t";
+      CSV += delimiter;
     }
-    CSV += "TOTAL:\t";
+    CSV += "TOTAL: " + delimiter;
     CSV += total;
     for (; i < currency_index - 2; i++) {
-      CSV += "\t";
+      CSV += delimiter;
     }
     CSV += currency + nl;
   }
@@ -253,7 +253,7 @@ function generateCSV(transactions) {
   if (transactions.length) {
     const columns = [
       {label: 'Date', key: 'transactionDetail.transactionDate', format: v => v.split('T')[0]},
-      {label: 'Time', key: 'transactionDetail.transactionDate', format: v => v.split('T')[1].split('.')[0]},
+      {label: 'Time', key: 'transactionDetail.transactionDate', format: v => v.split('T')[1].split('.')[0].replace('Z', '')},
       {label: 'Transaction ID', key: 'transactionDetail.transactionId'},
       {key: 'additionalInfo', multi: true, items: [
           {label: 'Product sku ID', key: 'orderItems[*].skuId'},
@@ -302,6 +302,7 @@ function loadTransactions(request) {
 
   function dateTZ(date) {
     date = date.replace('Z', '000000').substring(0, 23) + 'Z';
+    date = date.substring(0, 19) + '.' + date.substring(20);
     return date.replace('Z', '+0000')
   }
 
