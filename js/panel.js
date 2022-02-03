@@ -11,7 +11,80 @@ const globals = {
   currentDateISO: null
 };
 
+const progress = {
+  data: null
+};
+
+(function() {
+  function progressHtml(year, value) {
+    progress.data[year] = value;
+    return `
+    <div class="line" id="progress-${year}">
+      <div class="col">${year}</div>
+      <div class="progress" style="--width: ${value}%"></div>
+      <div class="col value">${value}%</div>
+    </div>`;
+  }
+
+  function updateData(year, value) {
+    if (progress.data[year] !== 100) {
+      progress.data[year] = value;
+      const line = document.getElementById("progress-" + year);
+      if (!line) {
+        const progressConsole = document.getElementById("console");
+        progressConsole.innerHTML = progressConsole.innerHTML + progressHtml(year, value);
+      } else {
+        line.querySelector('.progress').setAttribute("style", `--width: ${value}%`);
+        line.querySelector('.value').innerHTML = `${value}%`;
+      }
+    }
+  }
+
+  function setProgress(year, value) {
+    const progressConsole = document.getElementById("console");
+    if (!progress.data) {
+      progress.data = {start: year};
+      progressConsole.classList.remove("hidden");
+      progressConsole.innerHTML = '<div class="line">Loading transactions...</div>' + progressHtml(year, value);
+    } else {
+      for (let nextYear = year + 1; nextYear <= progress.data.start; nextYear++) {
+        updateData(nextYear, 100);
+      }
+      updateData(year, value);
+    }
+  }
+
+  const daySeconds = 3600000 * 24;
+
+  progress.set = function(date) {
+    const myDate = new Date(date);
+    const year = myDate.getFullYear();
+    const current = new Date(globals.currentDateISO);
+    const firstJan = new Date(year, 0, 1);
+    const diff = myDate - firstJan;
+    const max = current.getFullYear() == year ? (current - firstJan) / daySeconds : 364;
+    let val = 100 - Math.round((diff * 100 / daySeconds) / max);
+    if (val < 0) val = 0;
+    if (val > 100) val = 100;
+    setProgress(year * 1, val);
+  }
+
+  progress.done = function() {
+    for (let year = progress.data.start; typeof progress.data[year] !== "undefined"; year--) {
+      updateData(year, 100);
+    }
+  }
+
+  progress.clear = function() {
+    document.getElementById("console").classList.add("hidden");
+    progress.data = null;
+  }
+}) ();
+
 function infoShowBanner() {
+  progress.clear();
+  globals.loading = false;
+  globals.transactions = [];
   document.getElementById("loading2").classList.add("hidden");
   document.getElementById("total-info").classList.add("hidden");
   document.getElementById("navigate-banner").classList.remove("hidden");
@@ -20,6 +93,7 @@ function infoShowBanner() {
 }
 
 function infoShowLoader() {
+  progress.clear();
   document.getElementById("loading2").classList.remove("hidden");
   document.getElementById("total-info").classList.add("hidden");
   document.getElementById("navigate-banner").classList.add("hidden");
@@ -64,7 +138,7 @@ function infoShowData(count, total, CSV) {
     chrome.devtools.inspectedWindow.eval("document.getElementsByClassName('profile-text-main')[0].innerText",
       userId => {
         if (userId != globals.latestPsnID) {
-          infoShowLoader()
+          infoShowBanner();
         }
         globals.latestPsnID = userId;
         globals.userPsnID = userId;
@@ -118,6 +192,14 @@ function convertToCSV(data, columns) {
     if (obj === undefined) return null;
     const args = [].slice.call(arguments);
     args.shift();
+    if (args.length === 1 && args[0].indexOf('|') !== -1) {
+      const alternate = args[0].split('|');
+      for (let j in alternate) {
+        const val = getChildren(obj, alternate[j]);
+        if (val) return val;
+      }
+      return null;
+    }
     args.forEach(arg => {
       if (obj) {
         if (obj[arg] !== undefined) {
@@ -154,7 +236,11 @@ function convertToCSV(data, columns) {
       if (!col.multi) {
         let val = (getChildren(rowData, col.key) || '') + '';
         if (col.price) {
-          total_val += (val || 0) * 1;
+          val = (val || 0) * 1;
+          if (col.negative && val > 0) {
+            val *= -1;
+          }
+          total_val += val;
           total_index = index;
           total = col.format(total_val);
         }
@@ -181,13 +267,21 @@ function convertToCSV(data, columns) {
       if (!multiCols) {
         createMultiCols = columns.slice();
       }
-      columns[multiIndex].items.forEach((item, j) => {
-        const keys = item.key.split('[*].');
-        const new_key = multi + '>' + keys.join('>').replace(/\./g, '>');
-        const children = getChildren(multiData[keys[0]]);
-        if (!multiCols) {
-          createMultiCols.splice(multiIndex + j + 1, 0, Object.assign({}, item, {key: new_key}))
+      let alternateCols;
+      const eachItem = (item, j, alternate) => {
+        let keys = (item.key || 'none[*].none').split('[*].');
+        let new_key = multi + '>' + keys.join('>').replace(/\./g, '>');;
+        if (alternate) {
+          if (!alternateCols) {
+            alternateCols = columns.slice();
+          }
+          alternateCols.splice(multiIndex + j + 1, 0, Object.assign({}, item, {key: new_key}))
+        } else {
+          if (!multiCols) {
+            createMultiCols.splice(multiIndex + j + 1, 0, Object.assign({}, item, {key: new_key}))
+          }
         }
+        const children = getChildren(multiData[keys[0]]);
         if (children) {
           children.forEach((child, i) => {
             if (!insertRows[i]) {
@@ -196,18 +290,26 @@ function convertToCSV(data, columns) {
             insertRows[i][new_key] = getChildren(child, keys[1])
           });
         }
-      });
+      };
+
+      let rows = '';
+      if (columns[multiIndex].items1) {
+        columns[multiIndex].items1.forEach((item, i) => eachItem(item, i, true));
+      }
+
+      const alternate = insertRows.length > 0;
+      if (!alternate) {
+        columns[multiIndex].items.forEach((item, i) => eachItem(item, i));
+        if (createMultiCols) {
+          multiCols = createMultiCols;
+        }
+      }
 
       for (let j = 0, len = insertRows.length; j < len; j++) {
         Object.assign(insertRows[j], rowData);
       }
-
-      if (createMultiCols) {
-        multiCols = createMultiCols;
-      }
-      let rows = '';
       insertRows.forEach(rowData1 => {
-        rows += row(rowData1, multiCols);
+        rows += row(rowData1, alternate ? alternateCols : multiCols);
       })
       return rows;
     } else {
@@ -251,22 +353,31 @@ function downloadCSV(filename, txt) {
 
 function generateCSV(transactions) {
   if (transactions.length) {
+    const formatPrice = v => {
+      v = '' + v;
+      const isNegative = v.indexOf('-') === 0;
+      v = '000' + (isNegative ? v.substring(1) : v);
+      return (isNegative ? '-' : '') + v.slice(0, -2).replace(/^0+/, '0').replace(/^0([^\.])/, '$1') + '.' + v.slice(-2)
+    };
     const columns = [
       {label: 'Date', key: 'transactionDetail.transactionDate', format: v => v.split('T')[0]},
       {label: 'Time', key: 'transactionDetail.transactionDate', format: v => v.split('T')[1].split('.')[0].replace('Z', '')},
       {label: 'Transaction ID', key: 'transactionDetail.transactionId'},
       {key: 'additionalInfo', multi: true, items: [
+          {label: 'Type', key: 'orderItems[*].transactionType'},
           {label: 'Product sku ID', key: 'orderItems[*].skuId'},
           {label: 'Product Name', key: 'orderItems[*].productName'},
-          {label: 'Total Price', key: 'orderItems[*].totalPrice.value', price: true, format: v => {
-              // new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(23234.2342).replace(/[^\-\d\.]/g, '');
-              v = '000' + (v + '');
-              return v.slice(0, -2).replace(/^0+/, '0').replace(/^0([^\.])/, '$1') + '.' + v.slice(-2)
-            }},
-        ]},
+          {label: 'Total Price', key: 'orderItems[*].totalPrice.value', price: true, format: formatPrice}
+        ], items1: [
+          {label: 'Type', key: 'refundItems[*].transactionType'},
+          {label: 'Product sku ID'},
+          {label: 'Product Name', key: 'refundItems[*].productName'},
+          {label: 'Total Price', key: 'refundItems[*].total.value', price: true, negative: true, format: formatPrice}
+        ]
+      },
       {label: 'Currency Code', key: 'currencyCode', currency: true},
       {label: 'Billing Method', key: 'additionalInfo.chargePayments.0.paymentMethod'},
-      {label: 'Billing Info', key: 'additionalInfo.chargePayments.0.billingInfo'},
+      {label: 'Billing Info', key: 'additionalInfo.chargePayments.0.billingInfo|additionalInfo.chargeRefunds.0.billingInfo'},
       // {label: 'Invoice Type', key: 'invoiceType'},
       // {label: 'Transaction State', key: 'transactionDetail.transactionState'},
       {label: 'Platform ID', key: 'transactionDetail.platformId'},
@@ -275,12 +386,14 @@ function generateCSV(transactions) {
 
     const [count, total, currency, CSV] = convertToCSV(transactions, columns);
     infoShowData(count, total + ' ' + currency, CSV);
+    return [count, total, currency, CSV];
   }
 }
 
 function loadTransactions(request) {
   if (globals.loading || globals.transactions.length || !globals.authToken) return;
   globals.loading = true;
+  progress.clear();
 
   function getUrlParams(search) {
     let query = search.substr(1);
@@ -306,12 +419,25 @@ function loadTransactions(request) {
     return date.replace('Z', '+0000')
   }
 
+  let latestEndDate = null;
+
   function getTransactions(endDate) {
+    if (latestEndDate === endDate) { // infinite loop
+      globals.loading = false;
+      generateCSV(globals.transactions);
+      return;
+    }
+
+    latestEndDate = endDate;
+    progress.set(endDate);
     const xhrUrl = new URL(request.url);
     const params = getUrlParams(xhrUrl.search);
     params.startDate = dateTZ('2016-01-01T00:00:00.000Z');
     params.endDate = dateTZ(endDate);
     params.limit = 200;
+    if (params.transactionTypes && params.transactionTypes.indexOf('REFUND_PAYMENT_CHARGE') === -1) {
+      params.transactionTypes = params.transactionTypes + ',REFUND_PAYMENT_WALLET';
+    }
     xhrUrl.search = urlParamsToString(params);
 
     const xhr = new XMLHttpRequest();
@@ -327,12 +453,13 @@ function loadTransactions(request) {
         const response = JSON.parse(xhr.response);
         if (response.transactions) {
           globals.transactions = [].concat(globals.transactions, response.transactions);
-          if (response.hasMore && response.nextEndDate) {
+          if (response.transactions.length && response.hasMore && response.nextEndDate) {
             setTimeout(function () {
               getTransactions(response.nextEndDate);
             }, 100);
           } else {
             globals.loading = false;
+            progress.done();
             generateCSV(globals.transactions);
           }
         } else {
@@ -341,7 +468,6 @@ function loadTransactions(request) {
         if (xhr.status === 401) {
           globals.authToken = null;
           globals.loading = false;
-          globals.transactions = [];
           infoShowBanner();
         }
       }

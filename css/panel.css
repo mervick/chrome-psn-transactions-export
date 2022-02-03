@@ -11,7 +11,7 @@ body.dark-theme {
   display: block;
   float: left;
 }
-.col {
+.row .col {
   display: inline-block;
   vertical-align: top;
   float: left;
@@ -19,14 +19,14 @@ body.dark-theme {
   min-width: 240px;
   position: relative;
 }
-.col .loading-screen {
+.row .col .loading-screen {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
 }
-.col + .col {
+.row .col + .col {
   border-left: 1px solid #3caefb;
 }
 .clear {
@@ -211,4 +211,46 @@ body.dark-theme {
 
 .hidden {
   display: none!important;
+}
+
+#console {
+  display: block;
+  padding: 15px;
+}
+
+#console .line {
+  display: block;
+  font-size: 15px;
+  height: 26px;
+  line-height: 26px;
+}
+
+#console .col {
+  display: inline-block;
+  vertical-align: top;
+  margin-right: 5px;
+}
+#console .col:first-child {
+  width: 34px;
+}
+
+.progress {
+  vertical-align: middle;
+  display: inline-block;
+  width: 200px;
+  height: 18px;
+  border: 1px solid #3caefb;
+  position: relative;
+  margin-right: 5px;
+  overflow: hidden;
+}
+.progress:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--width);
+  background: #3caefb;
+  transition: width .6s ease;
 }
